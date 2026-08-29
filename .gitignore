@@ -149,6 +149,8 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
 .envrc
 .venv
 env/
@@ -216,3 +218,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# AI Security Engineering Lab: private and sensitive artifacts
+# ---------------------------------------------------------------------------
+
+# Private keys and certificate bundles
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Private evidence stays local
+evidence/private/
+data/private/
+captures/private/

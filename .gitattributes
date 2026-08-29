@@ -1,0 +1,33 @@
+# Normalize text files automatically.
+* text=auto
+
+# Source code and cross-platform configuration use LF.
+*.py text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+Dockerfile text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.python-version text eol=lf
+uv.lock text eol=lf
+
+# Native Windows command scripts use CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary evidence must never undergo text conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.wav binary
+*.mp3 binary
+*.pcap binary
+*.pcapng binary
+*.zip binary
