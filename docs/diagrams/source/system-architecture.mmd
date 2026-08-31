@@ -1,0 +1,157 @@
+%%{init: {
+  "theme": "base",
+  "flowchart": {
+    "nodeSpacing": 35,
+    "rankSpacing": 45,
+    "curve": "basis"
+  },
+  "themeVariables": {
+    "background": "transparent",
+    "primaryColor": "#F8FAFC",
+    "primaryTextColor": "#0F172A",
+    "primaryBorderColor": "#94A3B8",
+    "lineColor": "#64748B",
+    "fontFamily": "Arial, sans-serif"
+  }
+}}%%
+
+flowchart TB
+
+%% ============================================================
+%% AI SECURITY ENGINEERING LAB
+%% WHOLE-LAB PUBLIC ARCHITECTURE
+%%
+%% Three top-level planes:
+%% Runtime / Attack
+%% Deterministic Control
+%% Assurance
+%% ============================================================
+
+
+%% ============================================================
+%% RUNTIME / ATTACK PLANE
+%% Boundary -> Grounding -> Containment
+%% ============================================================
+
+subgraph RUNTIME["RUNTIME / ATTACK PLANE"]
+    direction LR
+
+    U["UNTRUSTED SOURCES<br/>User • Voice / STT • Documents • RAG<br/>Repositories • Tools • MCP • Memory • APIs"]
+
+    B["BOUNDARY<br/>Input / Context"]
+
+    T["PLUGGABLE TARGET<br/>Local LLM • RAG • Agent • MCP • Coding"]
+
+    M["GROUNDING<br/>Model / Agent + Connected Context"]
+
+    Q["ACTION ATTEMPT"]
+
+    Z{"AUTHORIZATION"}
+
+    D["CONTAINED<br/>NO EXECUTION"]
+
+    X["SANDBOX / EXECUTION"]
+
+    E["EXTERNAL EFFECT"]
+
+    U --> B
+    B --> T
+    T --> M
+    M --> Q
+    Q --> Z
+
+    Z -->|"DENY"| D
+    Z -->|"ALLOW"| X
+    X --> E
+end
+
+
+%% ============================================================
+%% DETERMINISTIC CONTROL PLANE
+%% ============================================================
+
+subgraph CONTROL["DETERMINISTIC CONTROL PLANE"]
+    direction LR
+
+    C1["IDENTITY + AUTHORIZATION<br/>Authentication • Policy • Least Privilege • Tool Scope"]
+
+    C2["EXECUTION CONTAINMENT<br/>Filesystem • Process Sandbox • Default-Deny Egress"]
+
+    C3["CREDENTIAL + HUMAN CONTROL<br/>Secret Brokering • Human Approval • Kill Switch"]
+
+    C1 --- C2
+    C2 --- C3
+end
+
+C1 -. "governs" .-> Z
+C2 -. "constrains" .-> X
+C3 -. "protects" .-> Z
+C3 -. "protects" .-> X
+
+
+%% ============================================================
+%% ASSURANCE PLANE
+%% ============================================================
+
+subgraph ASSURANCE["ASSURANCE PLANE"]
+    direction LR
+
+    S["OBSERVABLE SECURITY STATE<br/>Model • Action • Authorization • Execution • Effect"]
+
+    R["DETECTION + RESPONSE<br/>Containment • Recovery"]
+
+    A1["CASES + CAMPAIGNS"]
+
+    A2["TRAJECTORY + EVIDENCE"]
+
+    A3["SCORING + FINDINGS"]
+
+    A4["REMEDIATION + RETEST"]
+
+    A5["REGRESSION + CI / RELEASE GATE"]
+
+    S --> R
+    R --> A2
+
+    A1 --> A2
+    A2 --> A3
+    A3 --> A4
+    A4 --> A5
+end
+
+D --> S
+E --> S
+
+
+%% ============================================================
+%% VISUAL SEMANTICS
+%% ============================================================
+
+classDef neutral fill:#F8FAFC,stroke:#94A3B8,color:#0F172A,stroke-width:1px;
+
+classDef target fill:#EFF6FF,stroke:#60A5FA,color:#0F172A,stroke-width:1.5px;
+
+classDef auth fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+classDef contained fill:#ECFDF5,stroke:#10B981,color:#064E3B,stroke-width:2px;
+
+classDef effect fill:#FEF2F2,stroke:#EF4444,color:#7F1D1D,stroke-width:2px;
+
+classDef control fill:#EFF6FF,stroke:#3B82F6,color:#1E3A8A,stroke-width:1.5px;
+
+classDef assurance fill:#F5F3FF,stroke:#8B5CF6,color:#3B0764,stroke-width:1.5px;
+
+
+class U,B neutral;
+
+class T,M,Q,X target;
+
+class Z auth;
+
+class D contained;
+
+class E effect;
+
+class C1,C2,C3 control;
+
+class S,R,A1,A2,A3,A4,A5 assurance;

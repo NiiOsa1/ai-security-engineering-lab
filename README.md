@@ -194,21 +194,107 @@ assets/diagrams/system-architecture.svg
 Source:
 docs/diagrams/source/system-architecture.mmd
 
-The public diagram should show:
-- untrusted sources
-- target systems
-- model / agent
-- RAG / memory / tools / MCP
-- authorization
-- sandbox / execution
-- external effect
-- evidence / scoring
-- detection / containment
-- remediation / regression
-- CI / release gate
+Purpose:
+Show the full public architecture of the AI Security Engineering Lab as a reusable evaluation platform.
+This is the top-level system diagram for the repository.
 
-Do not include private infrastructure, customer systems, credentials, or non-public topology.
+The diagram must show five layers from left to right or top to bottom.
+
+LAYER 1: UNTRUSTED SOURCES
+Show representative adversarial or untrusted inputs entering the platform:
+- User Input
+- Documents / RAG Content
+- Repository / Issue / Pull Request Content
+- Tool Output
+- MCP Resources
+- Memory
+- Voice / Speech-to-Text
+- External API / Network Content
+
+LAYER 2: TARGET SYSTEMS
+Show that the lab can evaluate multiple target classes, not one monolithic app:
+- Deterministic Synthetic Target
+- Local Open-Weight LLM Target
+- Reference RAG System
+- Reference Enterprise Agent
+- Reference MCP Environment
+- Reference Memory System
+- AI Coding Agent
+- Optional External Provider Adapters
+
+The visual should make it clear that multiple target types plug into one common evaluation backbone.
+
+LAYER 3: COMMON DECISION AND ACTION PATH
+Show the core security flow:
+UNTRUSTED INPUT
+→ MODEL / AGENT
+→ ACTION ATTEMPT
+→ AUTHORIZATION
+→ SANDBOX / EXECUTION
+→ EXTERNAL EFFECT
+
+This path is central and should be visually dominant.
+
+LAYER 4: CONTROL PLANE
+Show deterministic controls surrounding or protecting the action path:
+- Identity
+- Policy
+- Least Privilege
+- Tool Scope
+- Filesystem Scope
+- Network Egress
+- Secrets Access
+- Human Approval
+- Kill Switch
+
+Authorization Deny must visibly stop the attack path before execution.
+The diagram must make containment visibly understandable.
+
+LAYER 5: EVALUATION AND ASSURANCE BACKBONE
+Show the reusable measurement lifecycle connected to the target/action path:
+- Evaluation Cases
+- Campaigns
+- Trajectories
+- Evidence
+- Scoring
+- Findings
+- Remediation
+- Retest
+- Regression
+- CI / Release Gate
+
+Required messages the diagram must communicate:
+1. The project tests many AI security surfaces on one shared backbone.
+2. Model failure is different from system compromise.
+3. Consequential actions pass through authorization and execution boundaries.
+4. Containment can stop a compromised model from causing external impact.
+5. Findings become retests and then regression coverage.
+
+Style guidance:
+- Public and technical
+- Clean, minimal, professional
+- No marketing clutter
+- No private network details
+- No customer systems
+- No secrets
+- No internal hostnames
+- No non-public topology
+- Suitable for GitHub README viewing at a glance
+
+The diagram should visually support the Three Failure Domains:
+- Boundary at untrusted entry points
+- Grounding around trusted context and system inputs
+- Containment around authorization, execution, and external effect
+
+Do not include:
+- private infrastructure
+- real phone numbers
+- customer data
+- proprietary environment names
+- confidential architecture details
 -->
+
+![AI Security Engineering Lab whole-lab architecture](assets/diagrams/system-architecture.svg)
 
 ## Security outcome model
 
