@@ -15,6 +15,7 @@ Dockerfile text eol=lf
 .gitattributes text eol=lf
 .python-version text eol=lf
 uv.lock text eol=lf
+*.svg text eol=lf
 
 # Native Windows command scripts use CRLF.
 *.bat text eol=crlf
