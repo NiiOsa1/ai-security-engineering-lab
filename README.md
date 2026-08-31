@@ -1,6 +1,5 @@
 ![AI Security Engineering Lab](assets/banner/ai-security-engineering-lab-hero.svg)
 
-
 > **AI security does not end when the model is compromised.**
 
 A model can be manipulated without the surrounding system being compromised.
@@ -10,7 +9,7 @@ This lab measures what happens next.
 ```text
 UNTRUSTED INPUT
       ↓
-MODEL
+MODEL / AGENT
       ↓
 ACTION ATTEMPT
       ↓
@@ -20,161 +19,200 @@ EXECUTION
       ↓
 EXTERNAL EFFECT
       ↓
-DETECTION + CONTAINMENT
+DETECTION + CONTAINMENT + RECOVERY
 ```
 
-The goal is not simply to ask whether an attack produced an unsafe model response.
+The central question is not only whether an attack changes model behavior.
 
-The goal is to determine whether adversarial influence crossed the boundaries that separate model behavior from real system impact, capture evidence of that progression, remediate the weakness, retest it, and prevent the same failure from returning.
+The question is whether adversarial influence crosses the boundaries that separate untrusted content from trusted decisions, whether it reaches a consequential action, whether authorization stops it, whether anything executes, whether the outside world changes, whether the event is detected, and whether the same failure can be prevented from returning.
+
+That is the security problem this project is built to evaluate.
+
+---
+
+## Contents
+
+- [What this project is](#what-this-project-is)
+- [What makes the lab different](#what-makes-the-lab-different)
+- [Security outcome model](#security-outcome-model)
+- [Three Failure Domains](#three-failure-domains)
+- [How the platform is organized](#how-the-platform-is-organized)
+- [Security modules](#security-modules)
+- [Module 01: Prompt Injection](#module-01-prompt-injection)
+- [Target systems](#target-systems)
+- [Evaluation lifecycle](#evaluation-lifecycle)
+- [Evaluation architecture](#evaluation-architecture)
+- [Evidence model](#evidence-model)
+- [Scoring and metrics](#scoring-and-metrics)
+- [Controls outside the model](#controls-outside-the-model)
+- [Agentic AI security](#agentic-ai-security)
+- [AI-assisted software engineering and DevSecOps](#ai-assisted-software-engineering-and-devsecops)
+- [Voice and multimodal security](#voice-and-multimodal-security)
+- [Regression and release gates](#regression-and-release-gates)
+- [Quick start](#quick-start)
+- [Repository layout](#repository-layout)
+- [How to use the lab on your own system](#how-to-use-the-lab-on-your-own-system)
+- [Framework mapping](#framework-mapping)
+- [Project status](#project-status)
+- [Results policy](#results-policy)
+- [Security and responsible use](#security-and-responsible-use)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
 ## What this project is
 
-The AI Security Engineering Lab is a modular security-evaluation platform for testing AI systems from adversarial input through real-world effect.
+The **AI Security Engineering Lab** is a modular, evidence-driven platform for evaluating the security of modern AI systems.
 
-It is designed around one common evaluation and evidence model that can be applied across:
+It is designed for:
 
-| Security surface | Examples |
-|---|---|
-| Model behavior | Jailbreaks, policy circumvention, system prompt extraction |
-| Prompt injection | Direct, indirect, multi-turn, encoded and cross-modal attacks |
-| RAG | Poisoned documents, instruction-bearing context, retrieval manipulation |
-| Agents | Goal hijacking, excessive agency, action chaining, tool misuse |
-| MCP | Malicious tool metadata, poisoned tool output, capability abuse, trust failures |
-| Memory | Poisoning, persistence, cross-session contamination, provenance failures |
-| Voice AI | Spoken injection, STT transformation, code-switching, voice-to-tool attack chains |
-| Authorization | Tool scoping, action gating, least privilege, human confirmation |
-| Containment | Sandboxing, network egress, secrets isolation, kill switches |
-| Infrastructure | Service hardening, segmentation, logging, detection and response |
+- AI security engineers,
+- red teams,
+- application security teams,
+- AI platform teams,
+- ML engineers,
+- agent developers,
+- DevSecOps teams,
+- security researchers,
+- engineers building production LLM applications.
 
-These are not intended to become disconnected security demos.
+The lab is built to answer questions such as:
 
-Every module feeds the same evaluation lifecycle.
+- Can untrusted content override trusted application instructions?
+- Can indirect prompt injection survive retrieval, parsing, transcription, or tool wrapping?
+- Can a manipulated model trigger a consequential action?
+- Can an agent escalate from reading data to changing a system?
+- Can a malicious tool or MCP server influence downstream decisions?
+- Can poisoned memory persist across sessions?
+- Can an AI coding agent be redirected by repository content?
+- Can a compromised model access secrets, files, networks, or privileged tools?
+- Can deterministic authorization stop an unsafe action even after model failure?
+- Can an attack be detected, contained, reconstructed, remediated, and converted into regression coverage?
+
+The lab is not a collection of disconnected prompts.
+
+It is an evaluation system for tracing security outcomes across the full path from **adversarial input to external effect**.
+
+---
+
+## What makes the lab different
+
+Many AI security tests stop here:
+
+```text
+attack
+  ↓
+model response
+  ↓
+PASS / FAIL
+```
+
+That is useful, but incomplete for systems that can retrieve data, call tools, modify files, use credentials, communicate over networks, or take autonomous actions.
+
+This lab continues the trace:
+
+```text
+ATTACK
+  ↓
+MODEL / AGENT BEHAVIOR
+  ↓
+ACTION ATTEMPT
+  ↓
+AUTHORIZATION
+  ↓
+EXECUTION
+  ↓
+EXTERNAL EFFECT
+  ↓
+DETECTION
+  ↓
+CONTAINMENT
+  ↓
+RECOVERY
+  ↓
+EVIDENCE
+  ↓
+REMEDIATION
+  ↓
+RETEST
+  ↓
+REGRESSION
+```
+
+The design is built around five principles.
+
+### 1. Model failure and system compromise are different events
+
+A model may follow malicious instructions while a lower-layer control still blocks the dangerous action.
+
+That distinction is measured explicitly.
+
+### 2. Security claims require evidence
+
+A result should be reproducible from:
+
+- versioned cases,
+- controlled configuration,
+- run metadata,
+- trajectories,
+- authorization decisions,
+- execution evidence,
+- scoring rules,
+- supporting artifacts.
+
+### 3. Controls are tested, not merely listed
+
+The lab is designed to compare security profiles such as:
+
+```text
+PERMISSIVE
+BASELINE
+HARDENED
+```
+
+The objective is to measure whether a control changes the security outcome.
+
+### 4. Fixed findings become regression tests
+
+A remediation is not complete because code changed.
+
+It is complete only after controlled retesting, residual-risk review, and permanent regression coverage where appropriate.
+
+### 5. The core path must remain forkable
+
+The deterministic evaluation path is designed so another engineer can clone the repository, run the local baseline, inspect evidence, add a case, and plug in a target without requiring paid model credentials.
 
 ---
 
 <!--
-IMAGE: WHOLE-LAB ARCHITECTURE
+PUBLIC DIAGRAM PLACEHOLDER
 
-Recommended path:
+Final asset:
 assets/diagrams/system-architecture.svg
 
-Recommended source:
+Source:
 docs/diagrams/source/system-architecture.mmd
 
-The diagram should show:
+The public diagram should show:
+- untrusted sources
+- target systems
+- model / agent
+- RAG / memory / tools / MCP
+- authorization
+- sandbox / execution
+- external effect
+- evidence / scoring
+- detection / containment
+- remediation / regression
+- CI / release gate
 
-TEXT
-DOCUMENT / RAG
-MCP
-TOOL OUTPUT
-VOICE → STT
-
-all entering an AI / Agent system,
-
-then:
-
-MODEL
-→ ACTION REQUEST
-→ AUTHORIZATION
-→ EXECUTION
-→ EXTERNAL EFFECT
-
-with:
-
-EVIDENCE
-→ SCORING
-→ FINDING
-→ REMEDIATION
-→ RETEST
-→ REGRESSION
-
-Authorization DENY should visibly terminate the dangerous path as successful containment.
+Do not include private infrastructure, customer systems, credentials, or non-public topology.
 -->
 
-## Three Failure Domains
+## Security outcome model
 
-The lab uses the **Three Failure Domains** as an engineering lens for understanding how AI failures propagate through a system.
-
-### Boundary
-
-**Where untrusted influence enters.**
-
-Examples include:
-
-- user prompts,
-- retrieved documents,
-- MCP resources,
-- tool output,
-- memory,
-- speech transcripts,
-- network and API boundaries.
-
-A boundary failure occurs when untrusted content crosses into a trusted decision path without sufficient separation, validation, provenance or policy enforcement.
-
-### Grounding
-
-**How the system decides what information to trust.**
-
-Examples include:
-
-- distinguishing instructions from data,
-- evaluating retrieved context,
-- trusting tool responses,
-- resolving conflicting sources,
-- preserving memory provenance,
-- deciding whether external content may influence behavior.
-
-A grounding failure occurs when the system treats untrusted, incorrect or attacker-controlled information as authoritative.
-
-### Containment
-
-**What the system is allowed to do if the model is manipulated or compromised.**
-
-Examples include:
-
-- authorization,
-- tool permissions,
-- least privilege,
-- action confirmation,
-- sandboxing,
-- network egress,
-- secrets access,
-- execution limits,
-- kill switches.
-
-Containment assumes that prevention may eventually fail.
-
-The question becomes:
-
-> If the model is compromised, what can the compromised system actually do?
-
----
-
-<!--
-IMAGE: THREE FAILURE DOMAINS
-
-Recommended path:
-assets/diagrams/three-failure-domains.svg
-
-Visual concept:
-
-BOUNDARY
-untrusted influence enters
-        ↓
-GROUNDING
-system decides what to trust
-        ↓
-CONTAINMENT
-system limits what compromise can do
-
-Show the three domains across Text, RAG, MCP, Agents and Voice AI.
--->
-
-## The security outcome model
-
-The lab deliberately separates states that are often collapsed into a single `PASS` or `FAIL`.
+The lab deliberately separates states that are often collapsed into one result.
 
 ```text
 Model Compromise
@@ -190,6 +228,8 @@ External Effect Occurred
 Detection
       ≠
 Containment
+      ≠
+Recovery
 ```
 
 Consider two systems exposed to the same successful prompt injection.
@@ -206,11 +246,13 @@ Authorization denies request
 No execution
         ↓
 No external effect
+        ↓
+Attempt recorded and contained
 ```
 
 The model failed.
 
-Containment held.
+The containment architecture held.
 
 ### System B
 
@@ -226,105 +268,376 @@ Tool executes
 External system changes
 ```
 
-The same model-level compromise produced a materially different system-level outcome.
+The same model-level failure produced a materially different system-level result.
 
-The lab exists to measure that difference.
+The lab is designed to measure that difference.
 
 ---
 
 <!--
-IMAGE: ATTACK TO IMPACT / CONTAINMENT FLOW
+PUBLIC DIAGRAM PLACEHOLDER
 
-Recommended path:
+Final asset:
 assets/diagrams/attack-to-impact.svg
 
-Recommended source:
+Source:
 docs/diagrams/source/attack-to-impact.mmd
-
-This should become one of the signature project diagrams.
 
 Path A:
 MODEL COMPROMISED
-→ ACTION ATTEMPTED
-→ AUTHORIZATION DENIED
-→ CONTAINED
+-> ACTION ATTEMPTED
+-> AUTHORIZATION DENIED
+-> NO EXECUTION
+-> CONTAINED
 
 Path B:
 MODEL COMPROMISED
-→ ACTION ATTEMPTED
-→ AUTHORIZATION GRANTED
-→ EXECUTION
-→ EXTERNAL EFFECT
+-> ACTION ATTEMPTED
+-> AUTHORIZATION GRANTED
+-> EXECUTION
+-> EXTERNAL EFFECT
+
+Path C:
+SECURITY EVENT
+-> DETECTION
+-> CONTAINMENT
+-> RECOVERY
 -->
 
-## Current release track
+## Three Failure Domains
 
-The first complete public security block is focused on:
+The lab uses the **Three Failure Domains** as an engineering lens for understanding how AI failures propagate.
 
-### Model & Conversation Security
+### Boundary
 
-- Jailbreak
-- Direct Prompt Injection
+**Where untrusted influence enters.**
 
-This release track is intended to establish the complete evaluation architecture before additional attack surfaces are introduced.
+Examples:
 
-The wider platform architecture is already designed for:
-
-```text
-Voice AI
-RAG
-Tool Authorization
-MCP
-Memory
-Agentic Systems
-Infrastructure and Containment
-```
-
-Those modules are added as corresponding production capabilities become mature enough to test, measure, harden and reproduce.
-
-The public lab grows from real engineering work rather than from speculative folders.
-
----
-
-## Jailbreak and prompt injection are not the same problem
-
-They are evaluated separately.
-
-### Jailbreak
-
-A jailbreak primarily targets **model-level behavioral or safety restrictions**.
-
-The central question is:
-
-> Can the attacker cause the model to violate a defined policy or behavioral constraint?
-
-### Prompt Injection
-
-Prompt injection targets **instruction control inside an application-integrated AI system**.
-
-The central question is:
-
-> Can attacker-controlled content override or redirect trusted application instructions?
-
-Prompt injection can arrive directly from a user or indirectly through content such as:
-
+- user input,
 - retrieved documents,
-- websites,
+- repository content,
 - tool output,
 - MCP resources,
 - memory,
-- speech transcripts.
+- speech transcripts,
+- API responses,
+- network inputs.
 
-The defenses, scoring criteria and downstream consequences are therefore not assumed to be identical.
+A boundary failure occurs when untrusted content enters a trusted decision path without sufficient separation, provenance, validation, or policy enforcement.
+
+### Grounding
+
+**How the system decides what information to trust and how that information may influence behavior.**
+
+Examples:
+
+- instruction vs data separation,
+- retrieved context,
+- tool-result trust,
+- source provenance,
+- memory provenance,
+- conflicting sources,
+- stale or poisoned context.
+
+A grounding failure occurs when untrusted, incorrect, stale, or attacker-controlled information is treated as authoritative.
+
+### Containment
+
+**What the system is allowed to do when prevention fails.**
+
+Examples:
+
+- authorization,
+- tool scope,
+- filesystem scope,
+- network egress,
+- secrets access,
+- sandboxing,
+- least privilege,
+- human approval,
+- execution policy,
+- kill switches.
+
+Containment assumes that a sufficiently capable attacker may eventually influence the model.
+
+The question becomes:
+
+> If that happens, what can the compromised system actually do?
+
+---
+
+<!--
+PUBLIC DIAGRAM PLACEHOLDER
+
+Final asset:
+assets/diagrams/three-failure-domains.svg
+
+Source:
+docs/diagrams/source/three-failure-domains.mmd
+
+BOUNDARY
+untrusted influence enters
+        ↓
+GROUNDING
+system decides what to trust
+        ↓
+CONTAINMENT
+system limits what compromise can do
+
+Apply across:
+Text
+Documents
+RAG
+Repositories
+Tools
+MCP
+Memory
+Agents
+Voice / multimodal
+-->
+
+## How the platform is organized
+
+The project is developed as **deep vertical security modules on one reusable horizontal evaluation backbone**.
+
+```text
+COMMON EVALUATION BACKBONE
+          │
+          ├── 01  Prompt Injection
+          ├── 02  Jailbreak & Model-Control Security
+          ├── 03  RAG Security
+          ├── 04  Agentic AI Security
+          ├── 05  MCP & Tool Security
+          ├── 06  Memory & Persistence Security
+          ├── 07  AI-Assisted Software Engineering & DevSecOps
+          ├── 08  Voice & Multimodal Security
+          ├── 09  Data, Privacy & Secrets
+          ├── 10  Infrastructure, Supply Chain & Containment
+          ├── 11  Detection, Response & Observability
+          └── 12  Cross-Layer / Multi-Agent Enterprise Campaigns
+```
+
+A module is not considered complete because a few attacks were demonstrated.
+
+A mature module should include the relevant:
+
+```text
+scope
+threat model
+attack taxonomy
+target coverage
+control coverage
+evaluation cases
+versioned suite
+controlled campaigns
+evidence
+scoring
+metrics
+findings
+remediation
+retest
+residual risk
+regression
+CI / release gates
+documentation
+limitations
+fork path
+```
+
+Later modules reuse proven platform components instead of rebuilding the evaluation engine from scratch.
+
+---
+
+## Security modules
+
+| Module | Focus | Status |
+|---|---|---|
+| 01 | Prompt Injection | In progress |
+| 02 | Jailbreak & Model-Control Security | Planned |
+| 03 | RAG Security | Planned |
+| 04 | Agentic AI Security | Planned |
+| 05 | MCP & Tool Security | Planned |
+| 06 | Memory & Persistence Security | Planned |
+| 07 | AI-Assisted Software Engineering & DevSecOps | Planned |
+| 08 | Voice & Multimodal Security | Planned |
+| 09 | Data, Privacy & Secrets | Planned |
+| 10 | Infrastructure, Supply Chain & Containment | Planned |
+| 11 | Detection, Response & Observability | Planned |
+| 12 | Cross-Layer / Multi-Agent Enterprise Campaigns | Planned |
+
+The table communicates direction, not completion.
+
+Only implemented code, tests, evidence, and reproducible results determine maturity.
+
+---
+
+## Module 01: Prompt Injection
+
+The first complete security module is **Prompt Injection**.
+
+Prompt injection is a useful first vertical slice because it crosses nearly every modern AI application boundary.
+
+### Direct prompt injection
+
+Attacker-controlled instructions are supplied directly through an input channel accepted by the application.
+
+Examples:
+
+- user text,
+- structured input,
+- code/configuration input,
+- multi-turn interaction,
+- transcribed user speech.
+
+### Indirect prompt injection
+
+Attacker-controlled instructions arrive through content the system reads, retrieves, observes, receives from another component, or incorporates into context.
+
+Examples:
+
+- documents,
+- RAG chunks,
+- web-like content,
+- repository files,
+- issue or pull-request text,
+- tool output,
+- MCP resources,
+- memory,
+- speech-to-text output,
+- multimodal-extracted text.
+
+### Transformations
+
+The module is designed to test whether malicious intent survives transformations such as:
+
+- summarization,
+- retrieval,
+- chunking,
+- parsing,
+- transcription,
+- serialization,
+- code blocks,
+- Markdown or HTML-like formatting,
+- tool wrapping,
+- encoding,
+- obfuscation,
+- multilingual or code-switched text,
+- long-context placement.
+
+### Attack goals
+
+Cases may test attempts to:
+
+- override trusted instructions,
+- reveal system or developer instructions,
+- disclose sensitive context,
+- influence downstream decisions,
+- trigger tool use,
+- manipulate tool arguments,
+- read unauthorized data,
+- access secrets,
+- write files,
+- modify code,
+- alter memory,
+- transmit data,
+- reach unauthorized network destinations,
+- cause destructive actions,
+- create persistence,
+- evade detection.
+
+### Source-to-sink analysis
+
+For consequential systems, the lab evaluates both the untrusted source and the dangerous sink.
+
+```text
+SOURCE: malicious repository content
+SINK: shell execution
+
+SOURCE: poisoned retrieved document
+SINK: outbound data transmission
+
+SOURCE: malicious tool output
+SINK: privileged database update
+
+SOURCE: attacker-controlled transcript
+SINK: account-changing action
+```
+
+A model-level manipulation that cannot reach a consequential sink is different from an attack that changes the outside world.
+
+### Module 01 completion standard
+
+Module 01 is not complete until the implemented scope includes:
+
+- direct injection,
+- indirect injection across major source classes,
+- benign controls,
+- controlled target configurations,
+- source-to-sink tests,
+- action/authorization/execution/effect evidence,
+- controls outside the model,
+- reproducible scoring,
+- explicit limitations,
+- retesting,
+- regression,
+- a deterministic fork-safe path.
+
+---
+
+## Prompt injection and jailbreak are different problems
+
+They can overlap, but the lab evaluates them separately.
+
+### Prompt Injection
+
+Prompt injection attacks **instruction control inside an AI application**.
+
+The central question is:
+
+> Can attacker-controlled content redirect trusted application behavior?
+
+### Jailbreak
+
+Jailbreak attacks **model-level behavioral or safety restrictions**.
+
+The central question is:
+
+> Can the attacker cause the model to violate a defined behavioral or safety policy?
+
+Separating them makes the threat model, expected behavior, controls, and scoring more precise.
+
+---
+
+## Target systems
+
+The lab is designed around multiple target types instead of one monolithic demo.
+
+| Target type | Purpose |
+|---|---|
+| Deterministic synthetic target | Fork-safe CI baseline and evaluation-engine testing |
+| Local open-weight LLM target | Controlled real-model experiments |
+| Reference RAG system | Document and retrieval-borne attacks |
+| Reference enterprise agent | Tool use, planning, authorization, containment |
+| Reference MCP environment | Server, tool, resource and trust-boundary tests |
+| Reference memory system | Persistence, poisoning and provenance |
+| AI coding agent | Repository-borne attacks and DevSecOps controls |
+| External provider adapters | Optional cross-provider campaigns |
+
+Target adapters are intended to let the evaluation framework remain stable while the underlying model or application changes.
+
+A basic fork should remain useful without commercial provider credentials.
 
 ---
 
 ## Evaluation lifecycle
 
-Every mature security module follows the same lifecycle.
+Every mature module follows a controlled evaluation lifecycle.
 
 ```text
 SCOPE / RULES OF ENGAGEMENT
+          ↓
+SECURITY PROPERTY
           ↓
 THREAT
           ↓
@@ -342,7 +655,7 @@ TRAJECTORY + EVIDENCE
           ↓
 SCORING
           ↓
-HUMAN ADJUDICATION, WHEN REQUIRED
+HUMAN REVIEW, WHEN REQUIRED
           ↓
 FINDING
           ↓
@@ -354,100 +667,251 @@ RETEST
           ↓
 RESIDUAL RISK
           ↓
-REGRESSION SUITE
+REGRESSION
           ↓
 BREAKING / NON-BREAKING DECISION
           ↓
 CI / RELEASE GATE
 ```
 
-A fix is not considered validated merely because code or configuration changed.
+A fix is not considered validated because code or configuration changed.
 
-It must survive retesting.
+It must survive controlled retesting.
 
-A validated fix should become regression coverage.
+A validated security property should become permanent regression coverage.
 
 ---
 
 <!--
-IMAGE: EVALUATION LIFECYCLE
+PUBLIC DIAGRAM PLACEHOLDER
 
-Recommended path:
+Final asset:
 assets/diagrams/evaluation-lifecycle.svg
 
-Recommended source:
+Source:
 docs/diagrams/source/evaluation-lifecycle.mmd
+
+Finalize only after the canonical evaluation data model is implemented and accepted.
 -->
 
 ## Evaluation architecture
 
-The platform separates reusable test definitions from execution configuration and observed evidence.
+The platform separates four questions:
+
+```text
+What are we testing?
+Under what conditions?
+What actually happened?
+What conclusion does the evidence support?
+```
+
+### Scope / Rules of Engagement
+
+Defines:
+
+- authorized targets,
+- out-of-scope targets,
+- permitted attack classes,
+- prohibited actions,
+- safety constraints,
+- data handling,
+- escalation,
+- stopping conditions.
+
+### Evaluation Plan
+
+Defines the campaign before execution:
+
+- threat references,
+- target,
+- control profile,
+- suite,
+- expected behavior,
+- scorer policy,
+- severity rubric,
+- repetitions,
+- stopping criteria,
+- evidence requirements,
+- environment,
+- compute/time/cost budget.
+
+Scoring rules should not be silently rewritten after the results are visible.
 
 ### Evaluation Case
 
 Defines **what is being tested**.
 
-Examples of case attributes include:
+A case can include:
 
 - case identifier,
-- attack category,
+- security module,
+- category,
 - technique,
 - security objective,
-- risk being tested,
 - attack vector,
 - input modality,
 - prerequisites,
-- payload or fixture reference,
+- fixture reference,
 - expected secure behavior,
 - failure condition,
 - pass criteria,
 - scorer,
-- taxonomy mappings,
+- framework mappings,
 - version.
 
-### Evaluation Campaign
+### Evaluation Suite / Corpus
 
-Defines **under what controlled conditions the test is executed**.
+A versioned collection of cases used for:
 
-Examples include:
+- repeatability,
+- regression,
+- baseline/candidate comparison,
+- model comparison,
+- control comparison,
+- release gating.
 
-- target version,
-- provider,
-- model,
-- model version,
-- prompt version,
-- authorization policy version,
-- tool configuration,
-- temperature and sampling settings,
-- repetition policy,
+### Target Profile
+
+Describes the system under test:
+
+- target type,
+- version,
+- capabilities,
+- trust boundaries,
+- tools,
+- identity,
+- filesystem access,
+- network access,
+- data classification,
+- known limitations.
+
+### Control Profile
+
+Describes which controls are active.
+
+Typical comparison profiles may include:
+
+```text
+PERMISSIVE
+BASELINE
+HARDENED
+```
+
+### Campaign
+
+Defines the controlled execution configuration:
+
 - suite version,
+- target version,
+- provider/model,
+- configuration hashes,
+- policy version,
+- tool configuration,
+- sampling parameters,
+- repetition policy,
 - scorer version,
 - environment,
 - stopping criteria,
-- resource budget.
+- budget.
 
-### Evaluation Run
+### Run
 
-Records **what happened during one execution**.
+Represents one execution of one case.
 
-A run may preserve:
+A run can preserve:
 
-- model response,
+- inputs,
+- hashes,
+- model output,
 - tool requests,
 - authorization decisions,
-- execution state,
+- execution result,
 - external effect,
 - detection state,
 - containment state,
 - timestamps,
 - latency,
-- token usage,
-- cost,
+- token/cost metadata,
 - evidence references,
-- hashes,
 - source-control revision.
 
-This separation makes model-to-model, version-to-version and control-to-control comparisons more defensible.
+### Trajectory
+
+For multi-step systems, capture externally observable events:
+
+```text
+input
+→ retrieval
+→ model / agent response
+→ tool request
+→ policy decision
+→ execution
+→ observation
+→ next action
+→ outcome
+```
+
+The lab does not depend on private chain-of-thought capture.
+
+### Security Property
+
+A security property is a claim that should remain true.
+
+Example:
+
+> A prompt-injected coding agent cannot write outside its assigned workspace or connect to an unapproved network destination.
+
+Once validated, a security property becomes a regression target.
+
+---
+
+## Evidence model
+
+Security conclusions should be reconstructable from evidence.
+
+A mature run may preserve fields such as:
+
+```text
+run_id
+case_id
+campaign_id
+module version
+suite / corpus version
+Git commit SHA
+input hash
+prompt hash
+fixture hash
+audio hash, when applicable
+provider
+model
+model version
+STT provider / version, when applicable
+sampling configuration
+target profile
+control profile
+timestamp
+expected secure behavior
+model compromise state
+action attempt
+authorization decision
+execution result
+external effect
+detection
+containment
+recovery
+scorer version
+human review state
+evidence references
+latency
+token usage
+cost
+```
+
+The exact schema is versioned with the implementation.
+
+Private or sensitive evidence must remain outside the public artifact path.
+
+Public examples use synthetic, sanitized, or clearly reconstructed-with-provenance data.
 
 ---
 
@@ -456,7 +920,7 @@ This separation makes model-to-model, version-to-version and control-to-control 
 The lab follows several non-negotiable rules.
 
 ```text
-No red-team campaign without phases.
+No campaign without phases.
 
 No phase without required artifacts.
 
@@ -478,7 +942,7 @@ No remediation without retest.
 
 No fixed vulnerability without regression coverage.
 
-No model or configuration comparison without controlled conditions.
+No comparison without controlled configuration.
 
 No CI security gate without an explicit blocking rule.
 
@@ -489,30 +953,28 @@ No public claim without reproducible support.
 
 ## Stopping criteria
 
-Red teaming does not end when the tester feels that enough prompts have been tried.
+Security testing should not end because the tester feels enough attacks have been attempted.
 
-Campaigns declare stopping criteria before results are interpreted.
+Campaigns declare stopping criteria before result interpretation.
 
 Supported strategies can include:
 
 - fixed case coverage,
 - fixed repetition count,
-- resource or cost budget,
+- compute/time/cost budget,
 - statistical precision,
 - mutation saturation,
-- safety stop conditions.
+- safety stop.
 
-The exact stopping rule belongs to the campaign.
-
-There is no universal arbitrary value for the number of attacks required.
+There is no universal number of attacks that proves an AI system is secure.
 
 ---
 
 ## Scoring and metrics
 
-A security metric is useful only when its numerator, denominator and success condition are explicit.
+A metric is useful only when its numerator, denominator, eligibility rule, and success condition are explicit.
 
-For example:
+Example:
 
 ```text
 Attack Success Rate
@@ -522,23 +984,26 @@ successful eligible attack executions
 total eligible attack executions
 ```
 
-But a single Attack Success Rate can still hide important differences.
+One aggregate number can still hide important system behavior.
 
 The lab can separately measure:
 
 | Metric | Question |
 |---|---|
-| Model Compromise Rate | Did the model violate the defined security property? |
-| Action Attempt Rate | Did compromise produce a consequential action request? |
+| Model Manipulation / Compromise Rate | Did the model violate the defined security property? |
+| Action Attempt Rate | Did the attack produce a consequential action request? |
 | Unauthorized Authorization Rate | Was an unauthorized capability permitted? |
 | Unauthorized Execution Rate | Did unauthorized execution occur? |
-| External Impact Rate | Did anything outside the AI system actually change? |
-| Detection Rate | Was the attack detected? |
+| External Effect Rate | Did something outside the AI system change? |
+| Detection Rate | Was the security event detected? |
 | Containment Rate | Was propagation stopped? |
+| Recovery Rate | Was the system returned to an acceptable state? |
 | Benign Task Success Rate | Did legitimate functionality remain usable? |
 | False Refusal Rate | Were legitimate requests incorrectly blocked? |
 
-Metrics are introduced only when the corresponding evidence exists.
+Metrics are introduced only when corresponding evidence exists.
+
+Small samples are not converted into broad claims of resistance.
 
 ---
 
@@ -546,16 +1011,16 @@ Metrics are introduced only when the corresponding evidence exists.
 
 Some outputs cannot be scored reliably with deterministic rules alone.
 
-Where human adjudication is required, the evaluation design should preserve:
+When human adjudication is required, the evaluation design can record:
 
 - independent labels,
 - rubric version,
 - reviewer disagreement,
 - adjudication,
 - final label,
-- agreement metrics when statistically and methodologically appropriate.
+- agreement metrics when statistically justified.
 
-Potential agreement measures may include:
+Potential agreement measures include:
 
 - percent agreement,
 - Cohen's kappa,
@@ -568,11 +1033,11 @@ A metric is selected because it fits the evaluation design, not because it sound
 
 ## Severity
 
-The lab does not assign arbitrary AI-specific severity numbers.
+The lab does not invent an arbitrary AI-specific severity score.
 
-Severity must be traceable to evidence and documented rationale.
+Severity should be traceable to evidence and documented rationale.
 
-Relevant dimensions may include:
+Relevant dimensions can include:
 
 - model compromise,
 - application compromise,
@@ -588,108 +1053,139 @@ Relevant dimensions may include:
 - containment,
 - external impact.
 
-Where conventional severity frameworks are appropriate, they can be mapped alongside AI-system-specific impact dimensions.
+Conventional severity systems can be mapped where appropriate while preserving AI-system-specific impact detail.
 
 ---
 
-## Evidence
+## Controls outside the model
 
-Security conclusions should be reconstructable from evidence.
+The model is one component of the security architecture.
 
-A mature run may preserve:
+It should not be the final authority for consequential actions.
+
+Where practical, enforce security controls outside the model.
+
+Examples:
 
 ```text
-run_id
-case_id
-campaign_id
-suite / corpus version
-Git commit SHA
-prompt SHA-256
-audio SHA-256
-fixture hash
-provider
-model
-model version
-STT provider / version
-sampling configuration
-timestamp
-expected secure behavior
-model compromise state
-action attempt
-authorization decision
-execution result
-external effect
-detection
-containment
-scorer version
-human review state
-evidence references
-latency
-token usage
-cost
+identity
+authorization
+tool scope
+filesystem scope
+network egress
+secret access
+sandbox policy
+human approval
+kill switch
 ```
 
-Private evidence and public evidence are separated.
-
-Sensitive production artifacts are never copied into the public repository merely to make a demonstration look more realistic.
-
-Public examples use synthetic or sanitized data.
+A compromised model should not be able to grant itself permissions because it can generate convincing text.
 
 ---
 
-## Production lineage
+## Agentic AI security
 
-This project is informed by security engineering performed against a production Voice AI system.
+Agentic systems increase the security importance of authorization, identity, containment, and auditability.
 
-An earlier Voice AI red-team campaign included:
+A controlled reference agent can eventually expose capabilities such as:
+
+- planning,
+- read tools,
+- action tools,
+- memory,
+- identity context,
+- policy requests,
+- sandboxed execution,
+- controlled network access,
+- audit logging,
+- kill-switch handling.
+
+The same scenario can then be tested under different security profiles:
 
 ```text
-31 test objectives
-40+ executions
-7 phone calls
-3 LLM inference providers
+PERMISSIVE / VULNERABLE
+PARTIALLY CONTROLLED
+HARDENED / LEAST PRIVILEGE
 ```
 
-The original campaign covered:
+The objective is not to build an impressive autonomous demo.
 
-```text
-A  Direct Prompt Injection
-B  Social Engineering
-C  System Prompt Extraction
-D  Sensitive Information Disclosure
-E  Hallucination / Misinformation
-F  Memory Poisoning
-G  Model Fingerprinting
-```
-
-The exercise produced one Low-severity finding around knowledge-cutoff disclosure and also exposed an important Voice AI observation: speech-to-text transformation can modify security-relevant attack payloads before they reach the model.
-
-The historical campaign is treated as engineering lineage, not as a statistically valid benchmark.
-
-Its limitations are preserved rather than hidden.
-
-The public lab improves on that baseline through:
-
-- controlled campaign definitions,
-- balanced execution,
-- explicit scoring,
-- repeated trials,
-- benign controls,
-- evidence manifests,
-- stopping criteria,
-- remediation,
-- retesting,
-- regression coverage.
+The objective is to measure how attack outcomes change when control architecture changes.
 
 ---
 
-## Voice AI as an attack modality
+## AI-assisted software engineering and DevSecOps
 
-Voice is not treated as a separate security universe.
+AI coding agents create a particularly important indirect-injection and execution surface.
 
-It is another path by which untrusted influence reaches the same AI system.
+A coding agent may consume:
 
-A complete Voice AI attack trajectory can look like:
+- source files,
+- README files,
+- issue text,
+- pull-request comments,
+- package metadata,
+- generated build output,
+- documentation,
+- test failures,
+- tool output.
+
+Any of these can contain attacker-controlled instructions.
+
+A controlled coding-agent target may be allowed to:
+
+- modify files,
+- execute tests,
+- invoke shell commands,
+- install dependencies,
+- create branches,
+- propose commits or pull requests,
+- modify Infrastructure as Code,
+- request deployment-like actions.
+
+High-risk actions remain sandboxed or simulated.
+
+The surrounding DevSecOps control plane can include:
+
+- branch protection,
+- least-privilege credentials,
+- protected agent configuration,
+- filesystem isolation,
+- network isolation,
+- default-deny egress,
+- secret scanning,
+- Static Application Security Testing,
+- Software Composition Analysis,
+- dependency vulnerability scanning,
+- Infrastructure as Code scanning,
+- policy-as-code,
+- Software Bill of Materials,
+- artifact provenance,
+- security regression,
+- human approval for consequential actions.
+
+A useful evidence chain can be reconstructed as:
+
+```text
+untrusted repository content
+→ agent context
+→ proposed action
+→ authorization decision
+→ sandbox execution
+→ Git diff
+→ security scanners
+→ CI gate
+→ external effect or containment
+→ final result
+```
+
+---
+
+## Voice and multimodal security
+
+Voice and multimodal systems introduce transformations between attacker intent and model input.
+
+A generic Voice AI security trajectory can be modeled as:
 
 ```text
 Attack Intent
@@ -706,11 +1202,9 @@ Transcript
       ↓
 Security-Critical Token Analysis
       ↓
-LLM Input
+LLM / Agent Input
       ↓
-Model Response
-      ↓
-Policy Decision
+Model Response / Plan
       ↓
 Tool Request
       ↓
@@ -718,30 +1212,30 @@ Authorization
       ↓
 Execution
       ↓
-Text-to-Speech
+System Output
       ↓
-Outcome
+External Outcome
 ```
 
-This allows the lab to study not only whether a spoken attack succeeds, but whether the attack survives transformation through the speech pipeline.
+This allows the lab to study not only whether an attack succeeds, but whether security-relevant content survives transformation through the input pipeline.
 
-Two experimental project metrics may be developed for this purpose:
+Project-defined research metrics may include:
 
 ### Security-Critical Token Preservation
 
-Measures whether security-relevant tokens survive speech-to-text transformation.
+Measures whether security-relevant tokens survive transformation.
 
 ### Attack Semantic Preservation
 
-Measures whether the attack's intent survives transcription even when exact words change.
+Measures whether attack intent survives transformation even when exact wording changes.
 
-These are project-defined research metrics and are not presented as industry standards.
+These metrics must be formally defined before numerical results are published.
 
 ---
 
-## Regression is first-class
+## Regression and release gates
 
-A security finding should not disappear into a PDF after remediation.
+A security finding should not disappear into a report after remediation.
 
 The expected lifecycle is:
 
@@ -759,11 +1253,11 @@ Validated Security Property
 Permanent Regression Case
 ```
 
-Regression tests protect previously established security properties against changes to:
+Regression protects established security properties against changes to:
 
 - models,
 - prompts,
-- retrieval pipelines,
+- retrieval,
 - agents,
 - MCP servers,
 - tools,
@@ -771,38 +1265,27 @@ Regression tests protect previously established security properties against chan
 - memory,
 - infrastructure.
 
----
+### Breaking and non-breaking security changes
 
-## Breaking and non-breaking security changes
+Potentially breaking regressions include:
 
-A model or application update can change behavior without necessarily creating a security regression.
-
-The lab therefore distinguishes security-relevant change from harmless variation.
-
-Potentially breaking changes include:
-
-- previously blocked attack becomes executable,
-- unauthorized authorization becomes possible,
-- external impact appears where none previously existed,
+- a previously blocked attack reaches execution,
+- authorization becomes more permissive unexpectedly,
+- external effect appears where none previously existed,
 - a remediated finding reappears,
-- containment falls beyond an approved threshold,
+- containment falls below policy,
+- required detection disappears,
 - a critical security property regresses.
 
 Potentially non-breaking changes include:
 
-- response wording changes without security-property change,
-- behavioral variation remains inside defined tolerance,
-- harmless output differences occur while containment remains unchanged.
+- wording changes without security-property change,
+- harmless output variation inside defined tolerance,
+- implementation refactors with unchanged security behavior.
 
-Exact thresholds are governed by the relevant campaign and release policy.
+### CI security gates
 
----
-
-## CI security gates
-
-Regression eventually feeds Continuous Integration and Continuous Delivery security gates.
-
-A gate may produce:
+A gate may classify:
 
 ```text
 PASS
@@ -816,91 +1299,33 @@ Potential gate conditions include:
 - previously blocked attack begins succeeding,
 - unauthorized execution crosses threshold,
 - containment degrades,
-- false refusals increase beyond tolerance,
-- benign task success degrades,
-- evaluation coverage decreases,
+- benign-task performance degrades beyond policy,
 - a remediated finding returns,
-- suite, scorer or policy changes without required review.
+- evaluation coverage decreases,
+- suite, scorer, control, or policy changes without required review.
 
-The deterministic local regression core is designed to work without paid model credentials.
-
-Provider-backed evaluation can run separately when credentials and budget are available.
-
----
-
-## Project modules
-
-The platform grows in complete security modules.
-
-| Module | Coverage |
-|---|---|
-| Model & Conversation Security | Jailbreak, direct prompt injection, prompt extraction, fingerprinting |
-| Voice AI Security | Spoken attacks, STT transformation, cross-modal attack paths |
-| RAG Security | Poisoning, malicious documents, grounding and retrieval failures |
-| Tool & Authorization Security | Tool misuse, argument manipulation, excessive permissions, action gating |
-| MCP Security | Tool/resource poisoning, trust boundaries, capability and identity abuse |
-| Memory Security | Poisoning, persistence, provenance and cross-session contamination |
-| Agentic Security | Goal hijacking, action chaining, excessive agency and autonomous execution |
-| Infrastructure & Containment | Segmentation, egress, secrets, sandboxing, monitoring and kill switches |
-
-Modules are promoted as implemented only when their required artifacts, tests, evidence and regression coverage are complete.
-
----
-
-## Build philosophy
-
-The engineering loop is:
-
-```text
-BUILD
-  ↓
-THREAT MODEL
-  ↓
-BREAK
-  ↓
-CAPTURE EVIDENCE
-  ↓
-MEASURE
-  ↓
-FIND ROOT CAUSE
-  ↓
-HARDEN
-  ↓
-RE-BREAK
-  ↓
-ASSESS RESIDUAL RISK
-  ↓
-ADD REGRESSION
-  ↓
-SANITIZE
-  ↓
-PUBLISH
-```
-
-The public repository grows from completed engineering work.
-
-The roadmap does not become public evidence merely because it exists.
+The deterministic local regression path is intended to work without commercial model credentials.
 
 ---
 
 ## Quick start
 
-The project currently uses Python 3.12 and `uv` for reproducible environment management.
+The project uses Python 3.12 and `uv` for reproducible environment management.
 
-### Clone
+### 1. Clone
 
 ```bash
 git clone https://github.com/NiiOsa1/ai-security-engineering-lab.git
 cd ai-security-engineering-lab
 ```
 
-### Create or synchronize the environment
+### 2. Synchronize the environment
 
 ```bash
 uv sync
 ```
 
-### Verify the project Python
+### 3. Verify Python
 
 ```bash
 uv run python --version
@@ -912,7 +1337,7 @@ Expected major/minor version:
 Python 3.12
 ```
 
-The local virtual environment is created under:
+The project-local virtual environment is created under:
 
 ```text
 .venv/
@@ -921,57 +1346,68 @@ The local virtual environment is created under:
 and is intentionally excluded from Git.
 
 <!--
-FUTURE QUICKSTART
+PUBLIC QUICKSTART TODO
 
-Once the first deterministic evaluation runner is complete, insert:
+Once the deterministic evaluation runner exists, replace this comment with the tested command.
 
-uv run ai-security-lab eval ...
-
-Do not expose a command here until the CLI actually exists.
+Do not publish a CLI command before the CLI exists.
 -->
 
 ---
 
-## Repository architecture
+## Repository layout
 
-The repository grows only as modules are implemented.
-
-The target architecture includes:
+The repository grows as capabilities are implemented.
 
 ```text
 ai-security-engineering-lab/
-│
 ├── README.md
 ├── SECURITY.md
 ├── ETHICS.md
 ├── CONTRIBUTING.md
+├── LICENSE
+├── pyproject.toml
+├── uv.lock
 │
 ├── docs/
 │   ├── architecture/
 │   ├── methodology/
-│   ├── threat-model/
+│   ├── modules/
+│   ├── threat-models/
+│   ├── adr/
+│   └── diagrams/
+│       └── source/
+│
+├── assets/
+│   ├── banner/
 │   └── diagrams/
 │
 ├── evals/
-│   ├── cases/
-│   ├── suites/
+│   ├── modules/
 │   ├── campaigns/
-│   ├── scorers/
-│   └── fixtures/
+│   └── schemas/
+│
+├── targets/
+│   ├── deterministic/
+│   └── reference/
 │
 ├── src/
 │   └── ai_security_lab/
 │       ├── models/
+│       ├── adapters/
 │       ├── runners/
 │       ├── targets/
 │       ├── scoring/
 │       ├── evidence/
-│       └── regression/
+│       ├── policy/
+│       ├── regression/
+│       └── reporting/
 │
 ├── evidence/
 │   └── public/
 │
 ├── reports/
+│   └── public/
 │
 ├── tests/
 │
@@ -979,39 +1415,70 @@ ai-security-engineering-lab/
     └── workflows/
 ```
 
-Directories are introduced when the corresponding capability is ready to be built.
+Directories are introduced when their corresponding capability is implemented.
 
-The repository structure is not used as a substitute for implementation.
+Repository structure is not used as a substitute for working code.
+
+### Where to look
+
+| If you want to... | Start here |
+|---|---|
+| Understand the architecture | `docs/architecture/` |
+| Understand evaluation methodology | `docs/methodology/` |
+| Explore a security module | `docs/modules/` |
+| Inspect attack/evaluation cases | `evals/modules/` |
+| Inspect target implementations | `targets/` and `src/ai_security_lab/targets/` |
+| Inspect scoring logic | `src/ai_security_lab/scoring/` |
+| Inspect evidence | `evidence/public/` |
+| Inspect regression logic | `src/ai_security_lab/regression/` |
+| Inspect CI security gates | `.github/workflows/` |
+| Review architecture decisions | `docs/adr/` |
 
 ---
 
-## Forking and extending the lab
+## How to use the lab on your own system
 
-The long-term fork experience is designed around:
+The intended workflow is:
 
 ```text
-git clone
+clone repository
       ↓
-uv sync
+run deterministic baseline
       ↓
-run deterministic local evaluation
+inspect a case
       ↓
-inspect evidence
+inspect the evidence
       ↓
-modify or add an Evaluation Case
+modify or add a case
       ↓
-plug in a target
+connect a target adapter
+      ↓
+define a target/control profile
       ↓
 run a campaign
       ↓
 compare baseline and candidate
       ↓
+retest
+      ↓
 run regression
 ```
 
-The core lab should remain useful without requiring paid external API credentials.
+A custom target should eventually provide enough information for the lab to answer:
 
-Provider adapters extend the platform rather than define it.
+```text
+What input reached the system?
+What did the model or agent do?
+What action was attempted?
+What did authorization decide?
+What executed?
+Did an external effect occur?
+Was the event detected?
+Was it contained?
+What evidence proves the conclusion?
+```
+
+The framework is intended to support target substitution without rewriting the evaluation methodology.
 
 ---
 
@@ -1019,14 +1486,17 @@ Provider adapters extend the platform rather than define it.
 
 Evaluation cases can map to relevant external security frameworks, including:
 
-- OWASP GenAI / LLM security risks,
-- OWASP Agentic security risks,
-- MITRE ATLAS techniques,
-- conventional application and infrastructure security controls where appropriate.
+- OWASP GenAI / LLM risks,
+- OWASP Agentic risks,
+- MITRE ATLAS,
+- NIST AI risk guidance,
+- conventional application-security controls,
+- cloud-security controls,
+- software-supply-chain controls.
 
-Framework mappings provide traceability.
+Framework mapping provides traceability.
 
-They do not replace technical explanation, evidence or root-cause analysis.
+It does not replace threat modeling, technical explanation, or evidence.
 
 The Three Failure Domains remain the lab's internal engineering lens:
 
@@ -1035,6 +1505,78 @@ Boundary
 Grounding
 Containment
 ```
+
+---
+
+## Project status
+
+The project is being built incrementally.
+
+Current emphasis:
+
+```text
+FOUNDATION
+    ↓
+MODULE 01: PROMPT INJECTION
+    ↓
+DEEP MODULE-BY-MODULE EXPANSION
+```
+
+Status labels are used deliberately:
+
+- **In progress** means active implementation/evaluation work exists.
+- **Planned** means the architecture anticipates the capability, but the module is not yet complete.
+- **Complete** should be used only when the module's documented exit criteria are satisfied.
+
+The public roadmap describes direction.
+
+It is not evidence of implementation.
+
+---
+
+<!--
+PUBLIC RESULTS DIAGRAM PLACEHOLDER
+
+Do not create this visual until real public campaign data exists.
+
+Final asset:
+assets/diagrams/results-overview.svg
+
+Potential contents:
+Baseline vs hardened
+Model Manipulation / Compromise Rate
+Unauthorized Execution Rate
+External Effect Rate
+Detection Rate
+Containment Rate
+Benign Task Success Rate
+False Refusal Rate
+
+Every value must come from actual campaign evidence.
+-->
+
+## Results policy
+
+Results are published only when the corresponding:
+
+- campaign,
+- configuration,
+- evidence,
+- scoring rules,
+- metrics,
+- limitations,
+
+are complete enough to support the claim.
+
+No placeholder benchmark values are presented as findings.
+
+No small sample is described as proof of broad resistance.
+
+No reconstructed artifact is presented as though it existed historically.
+
+No comparison is presented as controlled unless the relevant conditions were actually controlled.
+
+The first public result set is expected to come from **Module 01: Prompt Injection**.
 
 ---
 
@@ -1049,20 +1591,20 @@ This repository is intended for:
 - regression testing,
 - evaluation engineering.
 
-Production-derived material must be sanitized before publication.
+Do not use the project against systems you are not authorized to test.
 
-The public lab must not expose:
+Public evidence must not expose:
 
 - production credentials,
 - customer data,
-- real phone numbers,
-- private IP information,
-- secrets,
-- proprietary source code,
+- real secrets,
+- private keys,
 - confidential traces,
-- sensitive internal logs.
+- sensitive internal logs,
+- proprietary source code,
+- live exploit paths against real systems.
 
-Synthetic targets and fixtures are preferred for reproducible public demonstrations.
+Synthetic targets and controlled fixtures are preferred for reproducible public demonstrations.
 
 ---
 
@@ -1084,130 +1626,20 @@ Conclusion
 
 No result should be stronger than the evidence supporting it.
 
-No historical artifact should be reconstructed and presented as though it existed at the time of the original experiment.
-
-Reconstructed artifacts must be labeled accordingly.
-
 ---
 
-## What success looks like
-
-A mature release should let a technical reviewer answer yes to these questions:
-
-```text
-Can this engineer build?
-
-Can this engineer break?
-
-Can this engineer measure?
-
-Can this engineer reproduce?
-
-Can this engineer explain root cause?
-
-Can this engineer design a control?
-
-Can this engineer prove the control worked?
-
-Can this engineer prevent regression?
-
-Can this engineer govern evaluation changes?
-
-Can another engineer fork and run the work?
-
-Can the methodology survive technical challenge?
-
-Does the system distinguish model failure from real-world impact?
-```
-
----
-
-<!--
-IMAGE: REAL RESULTS
-
-Do not create this visual until real campaign data exists.
-
-Recommended path:
-assets/diagrams/results-overview.svg
-
-Potential contents:
-Baseline vs remediated
-Model Compromise Rate
-Unauthorized Execution Rate
-Containment Rate
-Benign Task Success Rate
-False Refusal Rate
-
-Every value must come from actual campaign evidence.
--->
-
-## Results
-
-Results are published only when the corresponding campaigns, evidence and scoring definitions are complete.
-
-No placeholder benchmark scores are presented as findings.
-
-The first public results will come from the Model & Conversation Security release track covering Jailbreak and Direct Prompt Injection.
-
----
-
-## Roadmap
-
-The project grows alongside a production Voice AI security program.
-
-The expected progression is:
-
-```text
-Model & Conversation Security
-        ↓
-Voice AI Security
-        ↓
-RAG Security
-        ↓
-Tool Authorization
-        ↓
-MCP Security
-        ↓
-Memory Security
-        ↓
-Agentic Security
-        ↓
-Cross-Layer Attack Chains
-        ↓
-Detection, Response and Release Gating
-```
-
-A later module is not considered complete because its directory exists.
-
-It becomes complete when it has:
-
-```text
-Threat model
-Evaluation cases
-Versioned suite
-Controlled campaign
-Repeated runs
-Scoring
-Evidence
-Metrics
-Findings where applicable
-Severity rationale
-Remediation where applicable
-Retest
-Regression coverage
-Documentation
-```
-
----
-
-## Project principles
+## Design principles
 
 ```text
 Understand before testing.
 
+Define the security property before measuring it.
+
 Threat-model before attacking.
 
 Measure before claiming.
+
+Separate model failure from system compromise.
 
 Evidence before severity.
 
@@ -1217,34 +1649,51 @@ Retest before declaring fixed.
 
 Regression before closing the finding.
 
+Containment outside the model where practical.
+
 Sanitize before publishing.
 
 Build for reproducibility.
 
-Design for containment.
+Design for failure.
 ```
 
 ---
 
 ## Contributing
 
-The project is being designed for extension by engineers testing their own AI systems.
+The project is being designed for engineers who want to evaluate and harden their own AI systems.
 
-Contribution guidance will cover:
+Contribution areas include:
 
-- new evaluation cases,
+- evaluation cases,
 - attack-family modules,
-- scorers,
+- controlled fixtures,
 - target adapters,
+- scorers,
 - evidence schemas,
 - regression tests,
+- security controls,
 - documentation,
 - framework mappings.
 
-Security evaluations should include clear expected behavior and reproducible evidence rather than collections of unscored prompts.
+A useful security contribution should define:
+
+```text
+security property
+threat
+expected secure behavior
+failure condition
+reproduction path
+evidence requirement
+scoring method
+```
+
+Collections of unscored prompts are not sufficient by themselves.
 
 <!--
-Later link this section to CONTRIBUTING.md after that file exists.
+PUBLIC TODO:
+Link this section to CONTRIBUTING.md when that file exists.
 -->
 
 ---
@@ -1261,4 +1710,4 @@ See [`LICENSE`](LICENSE).
 
 Built by **Michael Mensah Ofeor / NiiOsa Labs**.
 
-The project combines production AI engineering, adversarial evaluation, infrastructure security and continuous regression testing into one evolving security lab.
+The project is focused on one idea: do not stop at whether the model failed. Trace whether the system failed, prove what happened, contain the impact, and turn the fix into something that stays fixed.
