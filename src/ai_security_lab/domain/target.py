@@ -25,6 +25,14 @@ TargetName = Annotated[
 ]
 
 
+TargetVersion = Annotated[
+    str,
+    StringConstraints(
+        min_length=1,
+    ),
+]
+
+
 TargetType = Literal[
     "llm",
     "agent",
@@ -41,3 +49,4 @@ class Target(VersionedModel):
     target_id: TargetId
     name: TargetName
     target_type: TargetType
+    version: TargetVersion
