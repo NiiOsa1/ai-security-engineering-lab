@@ -26,3 +26,21 @@ def test_invalid_target_type_is_rejected() -> None:
             name="Invalid Target",
             target_type="banana",
         )
+
+
+def test_invalid_target_id_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Target(
+            target_id="Voice Agent!!!",
+            name="Invalid Identifier Target",
+            target_type="voice",
+        )
+
+
+def test_blank_target_name_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Target(
+            target_id="blank-name-target-001",
+            name="   ",
+            target_type="voice",
+        )
