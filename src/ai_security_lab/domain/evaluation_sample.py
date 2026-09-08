@@ -33,9 +33,20 @@ ContentHash = Annotated[
 ]
 
 
+MediaType = Annotated[
+    str,
+    StringConstraints(
+        strict=True,
+        min_length=3,
+        max_length=255,
+    ),
+]
+
+
 class EvaluationSample(VersionedModel):
     """The exact material supplied to an evaluation execution."""
 
     sample_id: SampleId
     version: SampleVersion
     content_hash: ContentHash
+    media_type: MediaType

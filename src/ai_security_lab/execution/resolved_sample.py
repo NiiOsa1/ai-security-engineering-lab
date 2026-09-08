@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field, model_validator
 from ai_security_lab.domain.base import ContractModel
 from ai_security_lab.domain.evaluation_sample import (
     ContentHash,
+    MediaType,
     SampleId,
     SampleVersion,
 )
@@ -23,6 +24,7 @@ class ResolvedEvaluationSample(ContractModel):
     sample_id: SampleId
     sample_version: SampleVersion
     content_hash: ContentHash
+    media_type: MediaType
     content: bytes = Field(
         strict=True,
         repr=False,

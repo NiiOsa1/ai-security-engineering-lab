@@ -18,6 +18,7 @@ def valid_resolved_sample_data() -> dict[str, object]:
         "sample_id": "sample-direct-pi-001",
         "sample_version": "1.0",
         "content_hash": CONTENT_HASH,
+        "media_type": "text/plain",
         "content": CONTENT,
     }
 
@@ -28,6 +29,7 @@ def test_matching_content_can_be_resolved() -> None:
     assert sample.sample_id == "sample-direct-pi-001"
     assert sample.sample_version == "1.0"
     assert sample.content_hash == CONTENT_HASH
+    assert sample.media_type == "text/plain"
     assert sample.content == CONTENT
 
 
